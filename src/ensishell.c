@@ -12,6 +12,7 @@
 
 #include "variante.h"
 #include "readcmd.h"
+#include "job.h"
 
 #ifndef VARIANTE
 #error "Variante non défini !!"
@@ -68,6 +69,9 @@ int main() {
     /* register "executer" function in scheme */
     scm_c_define_gsubr("executer", 1, 0, 0, executer_wrapper);
 #endif
+
+    struct Job jobs[100];
+    int jobCount = 0;
 
     while (1) {
         struct cmdline *l;
@@ -128,9 +132,11 @@ int main() {
             for (j = 0; cmd[j] != 0; j++) {
                 printf("'%s' ", cmd[j]);
             }
-
-            if(j-1 > 0 && cmd[j-1][0] == '&') {
-                l->bg = 1;
+            if(strcmp(cmd[0], "jobs") == 0) {
+                printf("Job list : \n");
+                for (int k = 0; k < jobCount; ++k) {
+                    printf("%d\n", jobs[k].pid);
+                }
             }
 
             printf("\n");
@@ -144,8 +150,19 @@ int main() {
                 execvp(cmd[0], cmd);
             }
 
-            int status;
-            waitpid(childPid, &status, 0);
+            if(l->bg) {
+                if(childPid > 0) {
+                    struct Job job;
+                    job.pid = childPid;
+                    job.cmd = cmd;
+                    jobs[jobCount++] = job;
+                    printf("%d", jobCount);
+                }
+            } else {
+                int status;
+                waitpid(childPid, &status, 0);
+            }
+
         }
     }
 
