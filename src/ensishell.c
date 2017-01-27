@@ -128,6 +128,11 @@ int main() {
             for (j = 0; cmd[j] != 0; j++) {
                 printf("'%s' ", cmd[j]);
             }
+
+            if(j-1 > 0 && cmd[j-1][0] == '&') {
+                l->bg = 1;
+            }
+
             printf("\n");
             int childPid = fork();
 
