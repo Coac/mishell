@@ -60,6 +60,18 @@ void terminate(char *line) {
     exit(0);
 }
 
+char** stringArrayCopy(char** toCopy) {
+    char **newStrArr = malloc(sizeof(toCopy));
+    for (int l = 0; toCopy[l] != 0; l++) {
+        newStrArr[l] = malloc( strlen( toCopy[l] ) + 1 );
+        strcpy( newStrArr[l], toCopy[l] );
+
+        printf("%s ", newStrArr[l]);
+    }
+
+    return newStrArr;
+}
+
 
 int main() {
     printf("Variante %d: %s\n", VARIANTE, VARIANTE_STRING);
@@ -132,10 +144,17 @@ int main() {
             for (j = 0; cmd[j] != 0; j++) {
                 printf("'%s' ", cmd[j]);
             }
+
             if(strcmp(cmd[0], "jobs") == 0) {
                 printf("Job list : \n");
                 for (int k = 0; k < jobCount; ++k) {
-                    printf("%d\n", jobs[k].pid);
+                    printf("%d ", jobs[k].pid);
+
+                    char **jobCmd = jobs[k].cmd;
+                    for (int l = 0; jobCmd[l] != 0; l++) {
+                        printf("%s ", jobCmd[l]);
+                    }
+                    printf("\n");
                 }
             }
 
@@ -152,11 +171,8 @@ int main() {
 
             if(l->bg) {
                 if(childPid > 0) {
-                    struct Job job;
-                    job.pid = childPid;
-                    job.cmd = cmd;
-                    jobs[jobCount++] = job;
-                    printf("%d", jobCount);
+                    struct Job* job = newJob(childPid, stringArrayCopy(cmd));
+                    jobs[jobCount++] = *job;
                 }
             } else {
                 int status;
