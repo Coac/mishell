@@ -72,7 +72,6 @@ char** stringArrayCopy(char** toCopy) {
     return newStrArr;
 }
 
-
 int main() {
     printf("Variante %d: %s\n", VARIANTE, VARIANTE_STRING);
 
@@ -154,6 +153,18 @@ int main() {
                     for (int l = 0; jobCmd[l] != 0; l++) {
                         printf("%s ", jobCmd[l]);
                     }
+
+                    int status;
+                    pid_t result = waitpid(jobs[k].pid, &status, WNOHANG);
+                    if (result == 0) {
+                        printf("alive");
+                    } else if (result == -1) {
+                        printf("error");
+                    } else {
+                        printf("exited");
+                    }
+                    printf(" %d ", result);
+
                     printf("\n");
                 }
             }
