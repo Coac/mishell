@@ -150,7 +150,7 @@ int main() {
                     printf("%d ", jobs[k].pid);
 
                     char **jobCmd = jobs[k].cmd;
-                    for (int l = 0; jobCmd[l] != 0; l++) {
+                    for (int l = 0; l < jobs[k].cmdCount; l++) {
                         printf("%s ", jobCmd[l]);
                     }
 
@@ -163,7 +163,7 @@ int main() {
                     } else {
                         printf("exited");
                     }
-                    printf(" %d ", result);
+                    printf(" %d %d ", status, result);
 
                     printf("\n");
                 }
@@ -182,7 +182,7 @@ int main() {
 
             if(l->bg) {
                 if(childPid > 0) {
-                    struct Job* job = newJob(childPid, stringArrayCopy(cmd));
+                    struct Job* job = newJob(childPid, stringArrayCopy(cmd), j);
                     jobs[jobCount++] = *job;
                 }
             } else {

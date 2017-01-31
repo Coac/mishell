@@ -5,12 +5,14 @@
 struct Job {
     int pid;
     char **cmd;
+    int cmdCount;
 };
 
-struct Job* newJob(int _pid, char **_cmd) {
+struct Job* newJob(int _pid, char **_cmd, int _cmdCount) {
     struct Job* job = malloc(sizeof(struct Job));
     job->pid = _pid;
     job->cmd = _cmd;
+    job->cmdCount = _cmdCount;
     return job;
 }
 
