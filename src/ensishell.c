@@ -72,7 +72,35 @@ char** stringArrayCopy(char** toCopy) {
     return newStrArr;
 }
 
-int main() {
+void printJobs(struct Job jobs[], int nbJobs)
+{
+    printf("Job list : \n");
+
+    for (int k = 0; k < nbJobs; ++k) {
+        printf("%d ", jobs[k].pid);
+
+        char **jobCmd = jobs[k].cmd;
+        for (int l = 0; l < jobs[k].cmdCount; l++) {
+            printf("%s ", jobCmd[l]);
+        }
+
+        int status;
+        pid_t result = waitpid(jobs[k].pid, &status, WNOHANG);
+        if (result == 0) {
+            printf("alive");
+        } else if (result == -1) {
+            printf("error");
+        } else {
+            printf("exited");
+        }
+        printf(" %d %d ", status, result);
+
+        printf("\n");
+    }
+}
+
+int main()
+{
     printf("Variante %d: %s\n", VARIANTE, VARIANTE_STRING);
 
 #if USE_GUILE == 1
@@ -121,10 +149,8 @@ int main() {
 
         /* If input stream closed, normal termination */
         if (!l) {
-
             terminate(0);
         }
-
 
         if (l->err) {
             /* Syntax error, read another command */
@@ -145,28 +171,7 @@ int main() {
             }
 
             if(strcmp(cmd[0], "jobs") == 0) {
-                printf("Job list : \n");
-                for (int k = 0; k < jobCount; ++k) {
-                    printf("%d ", jobs[k].pid);
-
-                    char **jobCmd = jobs[k].cmd;
-                    for (int l = 0; l < jobs[k].cmdCount; l++) {
-                        printf("%s ", jobCmd[l]);
-                    }
-
-                    int status;
-                    pid_t result = waitpid(jobs[k].pid, &status, WNOHANG);
-                    if (result == 0) {
-                        printf("alive");
-                    } else if (result == -1) {
-                        printf("error");
-                    } else {
-                        printf("exited");
-                    }
-                    printf(" %d %d ", status, result);
-
-                    printf("\n");
-                }
+                printJobs(jobs, jobCount);
             }
 
             printf("\n");
@@ -189,8 +194,6 @@ int main() {
                 int status;
                 waitpid(childPid, &status, 0);
             }
-
         }
     }
-
 }
