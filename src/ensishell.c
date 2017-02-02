@@ -27,6 +27,7 @@
 #if USE_GUILE == 1
 
 #include <libguile.h>
+#include <fcntl.h>
 
 int question6_executer(char *line) {
     /* Question 6: Insert your code to execute the command line
@@ -154,6 +155,12 @@ int main()
             }
 
             if (childPid == 0) {
+                if(l->out) {
+                    int outFile = open(l->out, O_RDWR | O_CREAT);
+                    dup2(outFile, STDOUT_FILENO);
+                    close(outFile);
+                }
+
                 execvp(cmd[0], cmd);
             }
 
