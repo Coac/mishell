@@ -72,32 +72,6 @@ char** stringArrayCopy(char** toCopy) {
     return newStrArr;
 }
 
-void printJobs(struct Job jobs[], int nbJobs)
-{
-    printf("Job list : \n");
-
-    for (int k = 0; k < nbJobs; ++k) {
-        printf("%d ", jobs[k].pid);
-
-        char **jobCmd = jobs[k].cmd;
-        for (int l = 0; l < jobs[k].cmdCount; l++) {
-            printf("%s ", jobCmd[l]);
-        }
-
-        int status;
-        pid_t result = waitpid(jobs[k].pid, &status, WNOHANG);
-        if (result == 0) {
-            printf("alive");
-        } else if (result == -1) {
-            printf("error");
-        } else {
-            printf("exited");
-        }
-        printf(" %d %d ", status, result);
-
-        printf("\n");
-    }
-}
 
 int main()
 {
@@ -109,8 +83,7 @@ int main()
     scm_c_define_gsubr("executer", 1, 0, 0, executer_wrapper);
 #endif
 
-    struct Job jobs[100];
-    int jobCount = 0;
+    struct JobNode* jobList = newJobNode(NULL);
 
     while (1) {
         struct cmdline *l;
@@ -171,10 +144,9 @@ int main()
             }
 
             if(strcmp(cmd[0], "jobs") == 0) {
-                printJobs(jobs, jobCount);
+                printJobs(jobList);
             }
 
-            printf("\n");
             int childPid = fork();
 
             if (childPid < 0) {
@@ -188,7 +160,8 @@ int main()
             if(l->bg) {
                 if(childPid > 0) {
                     struct Job* job = newJob(childPid, stringArrayCopy(cmd), j);
-                    jobs[jobCount++] = *job;
+                    addJob(jobList, job);
+
                 }
             } else {
                 int status;
