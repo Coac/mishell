@@ -29,6 +29,8 @@
 #include <libguile.h>
 #include <fcntl.h>
 
+struct JobNode* jobList;
+
 int question6_executer(char *line) {
     /* Question 6: Insert your code to execute the command line
      * identically to the standard execution scheme:
@@ -87,6 +89,57 @@ void computeFileRedirection(char* in, char* out) {
     }
 }
 
+void computeCmd(struct cmdline *l) {
+    int i, j;
+    if (!l) {
+        terminate(0);
+    }
+
+    if (l->err) {
+        /* Syntax error, read another command */
+        printf("error: %s\n", l->err);
+        return;
+    }
+
+    if (l->in) printf("in: %s\n", l->in);
+    if (l->out) printf("out: %s\n", l->out);
+    if (l->bg) printf("background (&)\n");
+
+    /* Display each command of the pipe */
+    for (i = 0; l->seq[i] != 0; i++) {
+        char **cmd = l->seq[i];
+        printf("seq[%d]: ", i);
+        for (j = 0; cmd[j] != 0; j++) {
+            printf("'%s' ", cmd[j]);
+        }
+
+        if(strcmp(cmd[0], "jobs") == 0) {
+            printJobs(jobList);
+        }
+
+        int childPid = fork();
+
+        if (childPid < 0) {
+            perror("fork:");
+        }
+
+        if (childPid == 0) {
+            computeFileRedirection(l->in, l->out);
+            execvp(cmd[0], cmd);
+        }
+
+        if(l->bg) {
+            if(childPid > 0) {
+                struct Job* job = newJob(childPid, stringArrayCopy(cmd), j);
+                addJob(jobList, job);
+
+            }
+        } else {
+            int status;
+            waitpid(childPid, &status, 0);
+        }
+    }
+}
 
 int main()
 {
@@ -98,12 +151,11 @@ int main()
     scm_c_define_gsubr("executer", 1, 0, 0, executer_wrapper);
 #endif
 
-    struct JobNode* jobList = newJobNode(NULL);
+    jobList = newJobNode(NULL);
 
     while (1) {
         struct cmdline *l;
         char *line = 0;
-        int i, j;
         char *prompt = "ensishell>";
 
         /* Readline use some internal memory structure that
@@ -134,55 +186,6 @@ int main()
 
         /* parsecmd free line and set it up to 0 */
         l = parsecmd(&line);
-
-        /* If input stream closed, normal termination */
-        if (!l) {
-            terminate(0);
-        }
-
-        if (l->err) {
-            /* Syntax error, read another command */
-            printf("error: %s\n", l->err);
-            continue;
-        }
-
-        if (l->in) printf("in: %s\n", l->in);
-        if (l->out) printf("out: %s\n", l->out);
-        if (l->bg) printf("background (&)\n");
-
-        /* Display each command of the pipe */
-        for (i = 0; l->seq[i] != 0; i++) {
-            char **cmd = l->seq[i];
-            printf("seq[%d]: ", i);
-            for (j = 0; cmd[j] != 0; j++) {
-                printf("'%s' ", cmd[j]);
-            }
-
-            if(strcmp(cmd[0], "jobs") == 0) {
-                printJobs(jobList);
-            }
-
-            int childPid = fork();
-
-            if (childPid < 0) {
-                perror("fork:");
-            }
-
-            if (childPid == 0) {
-                computeFileRedirection(l->in, l->out);
-                execvp(cmd[0], cmd);
-            }
-
-            if(l->bg) {
-                if(childPid > 0) {
-                    struct Job* job = newJob(childPid, stringArrayCopy(cmd), j);
-                    addJob(jobList, job);
-
-                }
-            } else {
-                int status;
-                waitpid(childPid, &status, 0);
-            }
-        }
+        computeCmd(l);
     }
 }
