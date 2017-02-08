@@ -23,34 +23,12 @@
  * following lines.  You may also have to comment related pkg-config
  * lines in CMakeLists.txt.
  */
-
 #if USE_GUILE == 1
-
 #include <libguile.h>
 #include <fcntl.h>
-
-struct JobNode* jobList;
-
-int question6_executer(char *line) {
-    /* Question 6: Insert your code to execute the command line
-     * identically to the standard execution scheme:
-     * parsecmd, then fork+execvp, for a single command.
-     * pipe and i/o redirection are not required.
-     */
-    printf("Not implemented yet: can not execute %s\n", line);
-
-    /* Remove this line when using parsecmd as it will free it */
-    free(line);
-
-    return 0;
-}
-
-SCM executer_wrapper(SCM x) {
-    return scm_from_int(question6_executer(scm_to_locale_stringn(x, 0)));
-}
-
 #endif
 
+struct JobNode* jobList;
 
 void terminate(char *line) {
 #if USE_GNU_READLINE == 1
@@ -140,6 +118,27 @@ void computeCmd(struct cmdline *l) {
         }
     }
 }
+
+
+#if USE_GUILE == 1
+
+int question6_executer(char *line) {
+    /* Question 6: Insert your code to execute the command line
+     * identically to the standard execution scheme:
+     * parsecmd, then fork+execvp, for a single command.
+     * pipe and i/o redirection are not required.
+     */
+    struct cmdline *l = parsecmd(&line);
+    computeCmd(l);
+    return 0;
+}
+
+SCM executer_wrapper(SCM x) {
+    return scm_from_int(question6_executer(scm_to_locale_stringn(x, 0)));
+}
+
+#endif
+
 
 int main()
 {
