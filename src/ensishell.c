@@ -156,7 +156,7 @@ int main()
 
             if (childPid == 0) {
                 if(l->out) {
-                    int outFile = open(l->out, O_RDWR | O_CREAT);
+                    int outFile = open(l->out, O_RDWR | O_CREAT, 0666);
                     dup2(outFile, STDOUT_FILENO);
                     close(outFile);
                 }
