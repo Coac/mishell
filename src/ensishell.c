@@ -73,6 +73,20 @@ char** stringArrayCopy(char** toCopy) {
     return newStrArr;
 }
 
+void computeFileRedirection(char* in, char* out) {
+    if(out) {
+        int outFile = open(out, O_RDWR | O_CREAT, 0666);
+        dup2(outFile, STDOUT_FILENO);
+        close(outFile);
+    }
+
+    if(in) {
+        int inFile = open(in, O_RDONLY);
+        dup2(inFile, STDIN_FILENO);
+        close(inFile);
+    }
+}
+
 
 int main()
 {
@@ -155,18 +169,7 @@ int main()
             }
 
             if (childPid == 0) {
-                if(l->out) {
-                    int outFile = open(l->out, O_RDWR | O_CREAT, 0666);
-                    dup2(outFile, STDOUT_FILENO);
-                    close(outFile);
-                }
-
-                if(l->in) {
-                    int inFile = open(l->in, O_RDONLY);
-                    dup2(inFile, STDIN_FILENO);
-                    close(inFile);
-                }
-
+                computeFileRedirection(l->in, l->out);
                 execvp(cmd[0], cmd);
             }
 
