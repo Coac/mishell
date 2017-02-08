@@ -161,6 +161,12 @@ int main()
                     close(outFile);
                 }
 
+                if(l->in) {
+                    int inFile = open(l->in, O_RDONLY);
+                    dup2(inFile, STDIN_FILENO);
+                    close(inFile);
+                }
+
                 execvp(cmd[0], cmd);
             }
 
