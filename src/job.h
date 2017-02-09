@@ -22,7 +22,9 @@ void freeJob(struct Job* job) {
         free(jobCmd[l]);
     }
     free(job->cmd);
+    job->cmd = NULL;
     free(job);
+    job = NULL;
 }
 
 
@@ -39,6 +41,12 @@ struct JobNode* newJobNode(struct Job* job) {
     return jobList;
 }
 
+void freeJobNode(struct JobNode *node) {
+    freeJob(node->job);
+    free(node);
+    node = NULL;
+}
+
 void addJob(struct JobNode *head, struct Job *job) {
     struct JobNode *current = head;
     struct JobNode *newNode = newJobNode(job);
@@ -47,6 +55,27 @@ void addJob(struct JobNode *head, struct Job *job) {
         current = current->next;
     }
     current->next = newNode;
+}
+
+void removeJob(struct JobNode *head, struct JobNode *jobNode) {
+    struct JobNode *current = head;
+    struct JobNode *prev = NULL;
+    while (current->next) {
+        prev = current;
+        current = current->next;
+
+        if(current == jobNode) {
+            if(current->next) {
+                prev->next = current->next;
+            } else {
+                prev->next = NULL;
+            }
+            freeJobNode(current);
+            return;
+        }
+
+    }
+
 }
 
 void printJobs(struct JobNode *head)
@@ -72,6 +101,7 @@ void printJobs(struct JobNode *head)
             printf("error");
         } else {
             printf("exited");
+            removeJob(head, current);
         }
         printf(" %d %d ", status, result);
 
