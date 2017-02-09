@@ -93,9 +93,10 @@ void computeCmd(struct cmdline *l) {
 
         if(strcmp(cmd[0], "jobs") == 0) {
             printJobs(jobList);
+            continue;
         }
 
-        int childPid = fork();
+        pid_t childPid = fork();
 
         if (childPid < 0) {
             perror("fork:");
@@ -104,6 +105,7 @@ void computeCmd(struct cmdline *l) {
         if (childPid == 0) {
             computeFileRedirection(l->in, l->out);
             execvp(cmd[0], cmd);
+            return;
         }
 
         if(l->bg) {

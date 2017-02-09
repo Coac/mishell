@@ -2,6 +2,8 @@
 #ifndef ENSISHELL_JOB_H
 #define ENSISHELL_JOB_H
 
+#include <errno.h>
+
 struct Job {
     int pid;
     char **cmd;
@@ -98,13 +100,22 @@ void printJobs(struct JobNode *head)
         if (result == 0) {
             printf("alive");
         } else if (result == -1) {
-            printf("error");
+            if ( errno == ECHILD )
+            {
+                perror("Error ECHILD!!") ;
+            }
+            else if ( errno == EINTR )
+            {
+                perror("Error EINTR!!") ;
+            }
+            else
+            {
+                perror(" Error EINVAL!!") ;
+            }
         } else {
             printf("exited");
             removeJob(head, current);
         }
-        printf(" %d %d ", status, result);
-
         printf("\n");
     }
 
