@@ -26,6 +26,8 @@
 #if USE_GUILE == 1
 #include <libguile.h>
 #include <fcntl.h>
+#include <stdbool.h>
+
 #endif
 
 struct JobNode* jobList;
@@ -64,6 +66,20 @@ void computeFileRedirection(char* in, char* out) {
         int inFile = open(in, O_RDONLY);
         dup2(inFile, STDIN_FILENO);
         close(inFile);
+    }
+}
+
+void computePipes(int fds[][2], int current, bool isLast) {
+    if (!isLast) { // if not last
+        dup2(fds[current][1], 1); // we listen for the next
+    }
+    close(fds[current][0]);
+    close(fds[current][1]);
+
+    if (current != 0) { // if not first
+        dup2(fds[current-1][0], 0); // we write on the pipe
+        close(fds[current-1][0]);
+        close(fds[current-1][1]); // we don't need to listen anymore
     }
 }
 
@@ -115,18 +131,7 @@ void computeCmd(struct cmdline *l) {
 
         if (childPid == 0) {
             computeFileRedirection(l->in, l->out);
-
-            if (l->seq[i+1] != 0) { // if not last
-                dup2(fds[i][1], 1); // we listen for the next
-            }
-            close(fds[i][0]);
-            close(fds[i][1]);
-
-            if (i != 0) { // if not first
-                dup2(fds[i-1][0], 0); // we write on the pipe
-                close(fds[i-1][0]);
-                close(fds[i-1][1]); // we don't need to listen
-            }
+            computePipes(fds, i, l->seq[i+1] == 0);
 
             execvp(cmd[0], cmd);
 
