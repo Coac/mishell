@@ -67,6 +67,18 @@ void computeFileRedirection(char* in, char* out) {
     }
 }
 
+int printCmd(int current, char **cmd) {
+    int j;
+
+    printf("seq[%d]: ", current);
+    for (j = 0; cmd[j] != 0; j++) {
+        printf("'%s' ", cmd[j]);
+    }
+    printf("\n");
+
+    return j;
+}
+
 void computeCmd(struct cmdline *l) {
     int i, j;
     if (!l) {
@@ -83,19 +95,18 @@ void computeCmd(struct cmdline *l) {
     if (l->out) printf("out: %s\n", l->out);
     if (l->bg) printf("background (&)\n");
 
+    int fds[100][2];
     /* Display each command of the pipe */
     for (i = 0; l->seq[i] != 0; i++) {
         char **cmd = l->seq[i];
-        printf("seq[%d]: ", i);
-        for (j = 0; cmd[j] != 0; j++) {
-            printf("'%s' ", cmd[j]);
-        }
+        j = printCmd(i, cmd);
 
         if(strcmp(cmd[0], "jobs") == 0) {
             printJobs(jobList);
             continue;
         }
 
+        pipe(fds[i]);
         pid_t childPid = fork();
 
         if (childPid < 0) {
@@ -104,15 +115,33 @@ void computeCmd(struct cmdline *l) {
 
         if (childPid == 0) {
             computeFileRedirection(l->in, l->out);
+
+            if (l->seq[i+1] != 0) { // if not last
+                dup2(fds[i][1], 1); // we listen for the next
+            }
+            close(fds[i][0]);
+            close(fds[i][1]);
+
+            if (i != 0) { // if not first
+                dup2(fds[i-1][0], 0); // we write on the pipe
+                close(fds[i-1][0]);
+                close(fds[i-1][1]); // we don't need to listen
+            }
+
             execvp(cmd[0], cmd);
+
             return;
+        }
+
+        if (i > 0) { // if not first, the i-1 pipe can be closed as it is not used anymore
+            close(fds[i-1][0]);
+            close(fds[i-1][1]);
         }
 
         if(l->bg) {
             if(childPid > 0) {
                 struct Job* job = newJob(childPid, stringArrayCopy(cmd), j);
                 addJob(jobList, job);
-
             }
         } else {
             int status;
