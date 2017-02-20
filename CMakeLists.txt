@@ -73,7 +73,7 @@ set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} ${GUILE_CFLAGS} -Wall -Werror -s
 # et le numéro de la variante que vous avez choisi
 #########
 set(VARIANTE_LOGINS lev delecluq)
-set(VARIANTE_SUJET 1)
+set(VARIANTE_SUJET 6)
 ###
 list(SORT VARIANTE_LOGINS)
 if (VARIANTE_LOGINS MATCHES "login[123]")

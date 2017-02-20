@@ -2,7 +2,7 @@
 #define VARIANTE_H
 
 #define LOGINS delecluq;lev
-#define SUJET 1
+#define SUJET 6
 #define USE_GUILE 1
 #define USE_GNU_READLINE 1
 
