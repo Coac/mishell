@@ -27,6 +27,7 @@
 #include <libguile.h>
 #include <fcntl.h>
 #include <stdbool.h>
+#include <bits/siginfo.h>
 
 #endif
 
@@ -175,6 +176,22 @@ SCM executer_wrapper(SCM x) {
 
 #endif
 
+void SigchldHandler(int sig, siginfo_t *siginfo, void *context) {
+    if(sig != SIGCHLD) return;
+
+    pid_t pid = siginfo->si_pid;
+
+    struct JobNode *current = jobList;
+    while (current->next) {
+        current = current->next;
+
+        if(current->job->pid == pid) {
+            removeJob(jobList, current);
+            printf("Terminated child : %d\n", siginfo->si_pid);
+            return;
+        }
+    }
+}
 
 int main()
 {
@@ -187,6 +204,15 @@ int main()
 #endif
 
     jobList = newJobNode(NULL);
+
+    struct sigaction act;
+    memset (&act, '\0', sizeof(act));
+    act.sa_sigaction = &SigchldHandler;
+    act.sa_flags = SA_SIGINFO;
+    if (sigaction(SIGCHLD, &act, NULL) < 0) {
+        perror ("sigaction");
+        return 1;
+    }
 
     while (1) {
         struct cmdline *l;
