@@ -18,14 +18,11 @@ struct Pipe* getNextPipe(struct Pipe* pipes) {
 }
 
 void freePipes(struct Pipe* pipes) {
-    struct Pipe* prev = pipes;
-    struct Pipe* head = prev;
+    struct Pipe* current = pipes;
 
-    while (prev != NULL) {
-        struct Pipe* oldPrev = prev;
-        prev = prev->prev;
-        free(oldPrev);
+    while (current != NULL) {
+        current = pipes->prev;
+        free(pipes);
+        pipes = current;
     }
-
-    free(head);
 }
