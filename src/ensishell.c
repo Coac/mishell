@@ -13,6 +13,7 @@
 #include "variante.h"
 #include "readcmd.h"
 #include "job.h"
+#include "pipe.h"
 
 #ifndef VARIANTE
 #error "Variante non défini !!"
@@ -70,17 +71,17 @@ void computeFileRedirection(char* in, char* out) {
     }
 }
 
-void computePipes(int fds[][2], int current, bool isLast) {
+void computePipes(struct Pipe* pipes, bool isLast) {
     if (!isLast) { // if not last
-        dup2(fds[current][1], 1); // we listen for the next
+        dup2(pipes->fd[1], STDOUT_FILENO); // we listen for the next
     }
-    close(fds[current][0]);
-    close(fds[current][1]);
+    close(pipes->fd[0]);
+    close(pipes->fd[1]);
 
-    if (current != 0) { // if not first
-        dup2(fds[current-1][0], 0); // we write on the pipe
-        close(fds[current-1][0]);
-        close(fds[current-1][1]); // we don't need to listen anymore
+    if (pipes->prev != NULL) { // if not first
+        dup2(pipes->prev->fd[0], STDIN_FILENO); // we write on the pipe
+        close(pipes->prev->fd[0]);
+        close(pipes->prev->fd[1]); // we don't need to listen anymore
     }
 }
 
@@ -112,7 +113,7 @@ void computeCmd(struct cmdline *l) {
     if (l->out) printf("out: %s\n", l->out);
     if (l->bg) printf("background (&)\n");
 
-    int fds[100][2];
+    struct Pipe* pipes = newPipe();
     /* Display each command of the pipe */
     for (i = 0; l->seq[i] != 0; i++) {
         char **cmd = l->seq[i];
@@ -123,7 +124,7 @@ void computeCmd(struct cmdline *l) {
             continue;
         }
 
-        pipe(fds[i]);
+        pipe(pipes->fd);
         pid_t childPid = fork();
 
         if (childPid < 0) {
@@ -132,16 +133,16 @@ void computeCmd(struct cmdline *l) {
 
         if (childPid == 0) {
             computeFileRedirection(l->in, l->out);
-            computePipes(fds, i, l->seq[i+1] == 0);
+            computePipes(pipes, l->seq[i+1] == 0);
 
             execvp(cmd[0], cmd);
 
             return;
         }
 
-        if (i > 0) { // if not first, the i-1 pipe can be closed as it is not used anymore
-            close(fds[i-1][0]);
-            close(fds[i-1][1]);
+        if (pipes->prev != NULL) { // if not first, the i-1 pipe can be closed as it is not used anymore
+            close(pipes->prev->fd[0]);
+            close(pipes->prev->fd[1]);
         }
 
         if(l->bg) {
@@ -153,7 +154,11 @@ void computeCmd(struct cmdline *l) {
             int status;
             waitpid(childPid, &status, 0);
         }
+
+        pipes = getNextPipe(pipes);
     }
+
+    freePipes(pipes);
 }
 
 

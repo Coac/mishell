@@ -96,7 +96,7 @@ configure_file (
 # Si vous utilisez plusieurs fichiers, en plus de ensishell.c, pour votre
 # shell il faut les ajouter ici
 ##
-add_executable(ensishell src/readcmd.c src/ensishell.c src/job.h)
+add_executable(ensishell src/readcmd.c src/ensishell.c src/job.c src/pipe.c)
 target_link_libraries(ensishell ${READLINE_LDFLAGS} ${GUILE_LDFLAGS})
 
 ##
