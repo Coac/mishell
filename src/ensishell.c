@@ -19,6 +19,10 @@
 #error "Variante non défini !!"
 #endif
 
+#ifndef MISHELL_DEBUG
+#define MISHELL_DEBUG 0
+#endif
+
 /* Guile (1.8 and 2.0) is auto-detected by cmake */
 /* To disable Scheme interpreter (Guile support), comment the
  * following lines.  You may also have to comment related pkg-config
@@ -88,11 +92,17 @@ void compute_pipes(struct Pipe* pipes, bool isLast) {
 int print_cmd(int current, char **cmd) {
     int j;
 
+#if MISHELL_DEBUG == 1
     printf("seq[%d]: ", current);
+#endif
     for (j = 0; cmd[j] != 0; j++) {
+#if MISHELL_DEBUG == 1
         printf("'%s' ", cmd[j]);
+#endif
     }
+#if MISHELL_DEBUG == 1
     printf("\n");
+#endif
 
     return j;
 }
@@ -109,9 +119,11 @@ void compute_cmd(struct cmdline *l) {
         return;
     }
 
+#if MISHELL_DEBUG == 1
     if (l->in) printf("in: %s\n", l->in);
     if (l->out) printf("out: %s\n", l->out);
     if (l->bg) printf("background (&)\n");
+#endif
 
     struct Pipe* pipes = newPipe();
     pid_t pids[100];
