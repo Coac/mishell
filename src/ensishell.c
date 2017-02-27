@@ -114,6 +114,7 @@ void computeCmd(struct cmdline *l) {
     if (l->bg) printf("background (&)\n");
 
     struct Pipe* pipes = newPipe();
+    pid_t pids[100];
     /* Display each command of the pipe */
     for (i = 0; l->seq[i] != 0; i++) {
         char **cmd = l->seq[i];
@@ -126,6 +127,7 @@ void computeCmd(struct cmdline *l) {
 
         pipe(pipes->fd);
         pid_t childPid = fork();
+        pids[i] = childPid;
 
         if (childPid < 0) {
             perror("fork:");
@@ -145,17 +147,22 @@ void computeCmd(struct cmdline *l) {
             close(pipes->prev->fd[1]);
         }
 
-        if(l->bg) {
-            if(childPid > 0) {
-                struct Job* job = newJob(childPid, stringArrayCopy(cmd), j);
-                addJob(jobList, job);
-            }
-        } else {
-            int status;
-            waitpid(childPid, &status, 0);
-        }
-
         pipes = getNextPipe(pipes);
+    }
+
+    for (int k = 0; l->seq[k] != 0; k++) {
+		char **cmd = l->seq[k];
+    	pid_t childPid = pids[k];
+		if(l->bg) {
+			printf("%d", j);
+			if(childPid > 0) {
+			   struct Job* job = newJob(childPid, stringArrayCopy(cmd), j);
+			   addJob(jobList, job);
+			}
+		} else {
+			int status;
+			waitpid(childPid, &status, 0);
+		}
     }
 
     freePipes(pipes);
@@ -222,7 +229,7 @@ int main()
     while (1) {
         struct cmdline *l;
         char *line = 0;
-        char *prompt = "ensishell>";
+        char *prompt = "🐵  mishell ⚡ ";
 
         /* Readline use some internal memory structure that
            can not be cleaned at the end of the program. Thus
