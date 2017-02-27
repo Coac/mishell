@@ -224,7 +224,7 @@ int main()
     while (1) {
         struct cmdline *l;
         char *line = 0;
-        char *prompt = "ensishell>";
+        char *prompt = "🐵  mishell ⚡ ";
 
         /* Readline use some internal memory structure that
            can not be cleaned at the end of the program. Thus
