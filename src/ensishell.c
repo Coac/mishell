@@ -45,19 +45,19 @@ void terminate(char *line) {
     exit(0);
 }
 
-char** stringArrayCopy(char** toCopy) {
-    char **newStrArr = malloc(sizeof(toCopy));
-    for (int l = 0; toCopy[l] != 0; l++) {
-        newStrArr[l] = malloc( strlen( toCopy[l] ) + 1 );
-        strcpy( newStrArr[l], toCopy[l] );
+char** string_array_copy(char** to_copy) {
+    char **new_str_arr = malloc(sizeof(to_copy));
+    for (int l = 0; to_copy[l] != 0; l++) {
+        new_str_arr[l] = malloc( strlen( to_copy[l] ) + 1 );
+        strcpy( new_str_arr[l], to_copy[l] );
 
-        printf("%s ", newStrArr[l]);
+        printf("%s ", new_str_arr[l]);
     }
 
-    return newStrArr;
+    return new_str_arr;
 }
 
-void computeFileRedirection(char* in, char* out) {
+void compute_file_redirection(char* in, char* out) {
     if(out) {
         int outFile = open(out, O_RDWR | O_CREAT, 0666);
         dup2(outFile, STDOUT_FILENO);
@@ -71,7 +71,7 @@ void computeFileRedirection(char* in, char* out) {
     }
 }
 
-void computePipes(struct Pipe* pipes, bool isLast) {
+void compute_pipes(struct Pipe* pipes, bool isLast) {
     if (!isLast) { // if not last
         dup2(pipes->fd[1], STDOUT_FILENO); // we listen for the next
     }
@@ -85,7 +85,7 @@ void computePipes(struct Pipe* pipes, bool isLast) {
     }
 }
 
-int printCmd(int current, char **cmd) {
+int print_cmd(int current, char **cmd) {
     int j;
 
     printf("seq[%d]: ", current);
@@ -97,7 +97,7 @@ int printCmd(int current, char **cmd) {
     return j;
 }
 
-void computeCmd(struct cmdline *l) {
+void compute_cmd(struct cmdline *l) {
     int i, j;
     if (!l) {
         terminate(0);
@@ -118,7 +118,7 @@ void computeCmd(struct cmdline *l) {
     /* Display each command of the pipe */
     for (i = 0; l->seq[i] != 0; i++) {
         char **cmd = l->seq[i];
-        j = printCmd(i, cmd);
+        j = print_cmd(i, cmd);
 
         if(strcmp(cmd[0], "jobs") == 0) {
             printJobs(jobList);
@@ -126,17 +126,15 @@ void computeCmd(struct cmdline *l) {
         }
 
         pipe(pipes->fd);
-        pid_t childPid = fork();
-        pids[i] = childPid;
-
-        if (childPid < 0) {
+        pid_t child_pid = fork();
+        pids[i] = child_pid;
+        if (child_pid < 0) {
             perror("fork:");
         }
 
-        if (childPid == 0) {
-            computeFileRedirection(l->in, l->out);
-            computePipes(pipes, l->seq[i+1] == 0);
-
+        if (child_pid == 0) {
+            compute_file_redirection(l->in, l->out);
+            compute_pipes(pipes, l->seq[i+1] == 0);
             execvp(cmd[0], cmd);
 
             return;
@@ -152,16 +150,16 @@ void computeCmd(struct cmdline *l) {
 
     for (int k = 0; l->seq[k] != 0; k++) {
 		char **cmd = l->seq[k];
-    	pid_t childPid = pids[k];
+    	pid_t child_pid = pids[k];
 		if(l->bg) {
 			printf("%d", j);
-			if(childPid > 0) {
-			   struct Job* job = newJob(childPid, stringArrayCopy(cmd), j);
+			if(child_pid > 0) {
+			   struct Job* job = newJob(child_pid, string_array_copy(cmd), j);
 			   addJob(jobList, job);
 			}
 		} else {
 			int status;
-			waitpid(childPid, &status, 0);
+			waitpid(child_pid, &status, 0);
 		}
     }
 
@@ -178,7 +176,7 @@ int question6_executer(char *line) {
      * pipe and i/o redirection are not required.
      */
     struct cmdline *l = parsecmd(&line);
-    computeCmd(l);
+    compute_cmd(l);
     return 0;
 }
 
@@ -188,7 +186,7 @@ SCM executer_wrapper(SCM x) {
 
 #endif
 
-void SigchldHandler(int sig, siginfo_t *siginfo, void *context) {
+void sigchld_handler(int sig, siginfo_t *siginfo, void *context) {
     if(sig != SIGCHLD) return;
 
     pid_t pid = siginfo->si_pid;
@@ -219,7 +217,7 @@ int main()
 
     struct sigaction act;
     memset (&act, '\0', sizeof(act));
-    act.sa_sigaction = &SigchldHandler;
+    act.sa_sigaction = &sigchld_handler;
     act.sa_flags = SA_SIGINFO;
     if (sigaction(SIGCHLD, &act, NULL) < 0) {
         perror ("sigaction");
@@ -259,6 +257,6 @@ int main()
 
         /* parsecmd free line and set it up to 0 */
         l = parsecmd(&line);
-        computeCmd(l);
+        compute_cmd(l);
     }
 }
