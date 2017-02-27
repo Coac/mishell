@@ -113,6 +113,7 @@ void computeCmd(struct cmdline *l) {
     if (l->bg) printf("background (&)\n");
 
     int fds[100][2];
+    pid_t pids[100];
     /* Display each command of the pipe */
     for (i = 0; l->seq[i] != 0; i++) {
         char **cmd = l->seq[i];
@@ -125,6 +126,7 @@ void computeCmd(struct cmdline *l) {
 
         pipe(fds[i]);
         pid_t childPid = fork();
+        pids[i] = childPid;
 
         if (childPid < 0) {
             perror("fork:");
@@ -143,16 +145,21 @@ void computeCmd(struct cmdline *l) {
             close(fds[i-1][0]);
             close(fds[i-1][1]);
         }
+    }
 
-        if(l->bg) {
-            if(childPid > 0) {
-                struct Job* job = newJob(childPid, stringArrayCopy(cmd), j);
-                addJob(jobList, job);
-            }
-        } else {
-            int status;
-            waitpid(childPid, &status, 0);
-        }
+    for (int k = 0; l->seq[k] != 0; k++) {
+		char **cmd = l->seq[k];
+    	pid_t childPid = pids[k];
+		if(l->bg) {
+			printf("%d", j);
+			if(childPid > 0) {
+			   struct Job* job = newJob(childPid, stringArrayCopy(cmd), j);
+			   addJob(jobList, job);
+			}
+		} else {
+			int status;
+			waitpid(childPid, &status, 0);
+		}
     }
 }
 
