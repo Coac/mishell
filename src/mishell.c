@@ -200,6 +200,7 @@ void compute_cmd(struct cmdline *l) {
                 struct job *job = new_job(command->pid, string_array_copy(command->cmd), j);
                 add_job(jobList, job);
             }
+            printf("\n");
         } else {
             int status;
             waitpid(command->pid, &status, 0);
