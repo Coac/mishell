@@ -29,6 +29,7 @@
  * lines in CMakeLists.txt.
  */
 #if USE_GUILE == 1
+
 #include <libguile.h>
 #include <fcntl.h>
 #include <stdbool.h>
@@ -36,7 +37,7 @@
 
 #endif
 
-struct job_node* jobList;
+struct job_node *jobList;
 
 void terminate(char *line) {
 #if USE_GNU_READLINE == 1
@@ -49,11 +50,17 @@ void terminate(char *line) {
     exit(0);
 }
 
-char** string_array_copy(char** to_copy) {
+/**
+ * Copies an array of strings to another one.
+ *
+ * @param to_copy array of strings to be copied
+ * @return the new array of strings
+ */
+char **string_array_copy(char **to_copy) {
     char **new_str_arr = malloc(sizeof(to_copy));
     for (int l = 0; to_copy[l] != 0; l++) {
-        new_str_arr[l] = malloc( strlen( to_copy[l] ) + 1 );
-        strcpy( new_str_arr[l], to_copy[l] );
+        new_str_arr[l] = malloc(strlen(to_copy[l]) + 1);
+        strcpy(new_str_arr[l], to_copy[l]);
 
         printf("%s ", new_str_arr[l]);
     }
@@ -61,34 +68,55 @@ char** string_array_copy(char** to_copy) {
     return new_str_arr;
 }
 
-void compute_file_redirection(char* in, char* out) {
-    if(out) {
+/**
+ * Initialize the input and output streams to read
+ * and/or write to files.
+ *
+ * @param in nullable input file
+ * @param out nullable output file
+ */
+void compute_file_redirection(char *in, char *out) {
+    if (out) {
         int outFile = open(out, O_RDWR | O_CREAT, 0666);
         dup2(outFile, STDOUT_FILENO);
         close(outFile);
     }
 
-    if(in) {
+    if (in) {
         int inFile = open(in, O_RDONLY);
         dup2(inFile, STDIN_FILENO);
         close(inFile);
     }
 }
 
-void compute_pipes(struct command* pipes, bool isLast) {
-    if (!isLast) { // if not last
-        dup2(pipes->fd[1], STDOUT_FILENO); // we listen for the next
+/**
+ * Initialize the input and output streams for commands
+ * to allow chained pipes.
+ *
+ * @param command command to be connected to the pipes
+ * @param isLast indicates whether the command is the last one or not
+ */
+void compute_pipes(struct command *command, bool isLast) {
+    if (!isLast) {
+        dup2(command->fd[1], STDOUT_FILENO); // we listen for the next command
     }
-    close(pipes->fd[0]);
-    close(pipes->fd[1]);
+    close(command->fd[0]);
+    close(command->fd[1]);
 
-    if (pipes->prev != NULL) { // if not first
-        dup2(pipes->prev->fd[0], STDIN_FILENO); // we write on the pipe
-        close(pipes->prev->fd[0]);
-        close(pipes->prev->fd[1]); // we don't need to listen anymore
+    if (command->prev != NULL) {
+        dup2(command->prev->fd[0], STDIN_FILENO); // we write on the previous command pipe
+        close(command->prev->fd[0]);
+        close(command->prev->fd[1]);
     }
 }
 
+/**
+ * Prints the user entered command, can be useful for debugging.
+ *
+ * @param current current sequence id
+ * @param cmd command and arguments to be displayed
+ * @return the total number of command and arguments
+ */
 int print_cmd(int current, char **cmd) {
     int j;
 
@@ -107,6 +135,11 @@ int print_cmd(int current, char **cmd) {
     return j;
 }
 
+/**
+ * Reads the entered command and tries to run it.
+ *
+ * @param l the entered textual command
+ */
 void compute_cmd(struct cmdline *l) {
     int i, j;
     if (!l) {
@@ -125,13 +158,13 @@ void compute_cmd(struct cmdline *l) {
     if (l->bg) printf("background (&)\n");
 #endif
 
-    struct command* command = new_command();
+    struct command *command = new_command();
     /* Display each command of the pipe */
     for (i = 0; l->seq[i] != 0; i++) {
         command->cmd = l->seq[i];
         j = print_cmd(i, command->cmd);
 
-        if(strcmp(command->cmd[0], "jobs") == 0) {
+        if (strcmp(command->cmd[0], "jobs") == 0) {
             remove_jobs(jobList);
             continue;
         }
@@ -145,7 +178,7 @@ void compute_cmd(struct cmdline *l) {
 
         if (child_pid == 0) {
             compute_file_redirection(l->in, l->out);
-            compute_pipes(command, l->seq[i+1] == 0);
+            compute_pipes(command, l->seq[i + 1] == 0);
             execvp(command->cmd[0], command->cmd);
 
             exit(EXIT_FAILURE);
@@ -162,16 +195,16 @@ void compute_cmd(struct cmdline *l) {
     command = get_first_command(command);
 
     while (command != NULL) {
-		if(l->bg) {
-			printf("%d", j);
-			if(command->pid > 0) {
-			   struct job* job = new_job(command->pid, string_array_copy(command->cmd), j);
+        if (l->bg) {
+            printf("%d", j);
+            if (command->pid > 0) {
+                struct job *job = new_job(command->pid, string_array_copy(command->cmd), j);
                 add_job(jobList, job);
-			}
-		} else {
-			int status;
-			waitpid(command->pid, &status, 0);
-		}
+            }
+        } else {
+            int status;
+            waitpid(command->pid, &status, 0);
+        }
 
         command = command->next;
     }
@@ -199,8 +232,11 @@ SCM executer_wrapper(SCM x) {
 
 #endif
 
+/**
+ * Callback for asynchronous commands.
+ */
 void sigchld_handler(int sig, siginfo_t *siginfo, void *context) {
-    if(sig != SIGCHLD) return;
+    if (sig != SIGCHLD) return;
 
     pid_t pid = siginfo->si_pid;
 
@@ -208,7 +244,7 @@ void sigchld_handler(int sig, siginfo_t *siginfo, void *context) {
     while (current->next) {
         current = current->next;
 
-        if(current->job->pid == pid) {
+        if (current->job->pid == pid) {
             remove_job(jobList, current);
             printf("Terminated child : %d\n", siginfo->si_pid);
             return;
@@ -216,8 +252,7 @@ void sigchld_handler(int sig, siginfo_t *siginfo, void *context) {
     }
 }
 
-int main()
-{
+int main() {
     printf("Variante %d: %s\n", VARIANTE, VARIANTE_STRING);
 
 #if USE_GUILE == 1
@@ -229,11 +264,11 @@ int main()
     jobList = new_job_node(NULL);
 
     struct sigaction act;
-    memset (&act, '\0', sizeof(act));
+    memset(&act, '\0', sizeof(act));
     act.sa_sigaction = &sigchld_handler;
     act.sa_flags = SA_SIGINFO;
     if (sigaction(SIGCHLD, &act, NULL) < 0) {
-        perror ("sigaction");
+        perror("sigaction");
         return 1;
     }
 

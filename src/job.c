@@ -4,8 +4,8 @@
 #include <stdio.h>
 #include <sys/wait.h>
 
-struct job* new_job(int pid, char **cmd, int cmd_count) {
-    struct job* job = malloc(sizeof(struct job));
+struct job *new_job(int pid, char **cmd, int cmd_count) {
+    struct job *job = malloc(sizeof(struct job));
     job->pid = pid;
     job->cmd = cmd;
     job->cmd_count = cmd_count;
@@ -24,8 +24,8 @@ void free_job(struct job *job) {
     job = NULL;
 }
 
-struct job_node* new_job_node(struct job *job) {
-    struct job_node* jobList = (struct job_node*) malloc(sizeof(struct job_node));
+struct job_node *new_job_node(struct job *job) {
+    struct job_node *jobList = (struct job_node *) malloc(sizeof(struct job_node));
     jobList->next = NULL;
     jobList->job = job;
 
@@ -56,8 +56,8 @@ void remove_job(struct job_node *head, struct job_node *job_node) {
         prev = current;
         current = current->next;
 
-        if(current == job_node) {
-            if(current->next) {
+        if (current == job_node) {
+            if (current->next) {
                 prev->next = current->next;
             } else {
                 prev->next = NULL;
@@ -70,14 +70,13 @@ void remove_job(struct job_node *head, struct job_node *job_node) {
     }
 }
 
-void remove_jobs(struct job_node *head)
-{
+void remove_jobs(struct job_node *head) {
     printf("Job list : \n");
 
     struct job_node *current = head;
     while (current->next) {
         current = current->next;
-        struct job* job = current->job;
+        struct job *job = current->job;
         printf("%d ", job->pid);
 
         char **jobCmd = job->cmd;
@@ -90,17 +89,12 @@ void remove_jobs(struct job_node *head)
         if (result == 0) {
             printf("alive");
         } else if (result == -1) {
-            if ( errno == ECHILD )
-            {
-                perror("Error ECHILD!!") ;
-            }
-            else if ( errno == EINTR )
-            {
-                perror("Error EINTR!!") ;
-            }
-            else
-            {
-                perror(" Error EINVAL!!") ;
+            if (errno == ECHILD) {
+                perror("Error ECHILD!!");
+            } else if (errno == EINTR) {
+                perror("Error EINTR!!");
+            } else {
+                perror(" Error EINVAL!!");
             }
         } else {
             printf("exited");

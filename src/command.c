@@ -1,7 +1,7 @@
 #include "command.h"
 
-struct command* new_command() {
-    struct command* commands = (struct command*) malloc(sizeof(struct command));
+struct command *new_command() {
+    struct command *commands = (struct command *) malloc(sizeof(struct command));
 
     commands->prev = NULL;
     commands->next = NULL;
@@ -9,7 +9,7 @@ struct command* new_command() {
     return commands;
 }
 
-struct command* get_next_command(struct command *command) {
+struct command *get_next_command(struct command *command) {
     command->next = new_command();
     command->next->prev = command;
 
@@ -17,7 +17,7 @@ struct command* get_next_command(struct command *command) {
 }
 
 void free_commands(struct command *command) {
-    struct command* current = command;
+    struct command *current = command;
 
     while (current != NULL) {
         current = command->prev;
@@ -28,7 +28,7 @@ void free_commands(struct command *command) {
     command = NULL;
 }
 
-struct command* get_first_command(struct command *command) {
+struct command *get_first_command(struct command *command) {
     while (command->prev != NULL) {
         command = command->prev;
     }
