@@ -163,7 +163,6 @@ void compute_cmd(struct cmdline *l) {
 
     while (command != NULL) {
 		if(l->bg) {
-			printf("%d", j);
 			if(command->pid > 0) {
 			   struct job* job = new_job(command->pid, string_array_copy(command->cmd), j);
                 add_job(jobList, job);
