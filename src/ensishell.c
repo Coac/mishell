@@ -36,7 +36,7 @@
 
 #endif
 
-struct JobNode* jobList;
+struct job_node* jobList;
 
 void terminate(char *line) {
 #if USE_GNU_READLINE == 1
@@ -75,7 +75,7 @@ void compute_file_redirection(char* in, char* out) {
     }
 }
 
-void compute_pipes(struct Command* pipes, bool isLast) {
+void compute_pipes(struct command* pipes, bool isLast) {
     if (!isLast) { // if not last
         dup2(pipes->fd[1], STDOUT_FILENO); // we listen for the next
     }
@@ -125,14 +125,14 @@ void compute_cmd(struct cmdline *l) {
     if (l->bg) printf("background (&)\n");
 #endif
 
-    struct Command* command = newCommand();
+    struct command* command = new_command();
     /* Display each command of the pipe */
     for (i = 0; l->seq[i] != 0; i++) {
         command->cmd = l->seq[i];
         j = print_cmd(i, command->cmd);
 
         if(strcmp(command->cmd[0], "jobs") == 0) {
-            printJobs(jobList);
+            remove_jobs(jobList);
             continue;
         }
 
@@ -156,17 +156,17 @@ void compute_cmd(struct cmdline *l) {
             close(command->prev->fd[1]);
         }
 
-        command = getNextCommand(command);
+        command = get_next_command(command);
     }
 
-    command = getFirstCommand(command);
+    command = get_first_command(command);
 
     while (command != NULL) {
 		if(l->bg) {
 			printf("%d", j);
 			if(command->pid > 0) {
-			   struct Job* job = newJob(command->pid, string_array_copy(command->cmd), j);
-			   addJob(jobList, job);
+			   struct job* job = new_job(command->pid, string_array_copy(command->cmd), j);
+                add_job(jobList, job);
 			}
 		} else {
 			int status;
@@ -176,7 +176,7 @@ void compute_cmd(struct cmdline *l) {
         command = command->next;
     }
 
-    freeCommands(command);
+    free_commands(command);
 }
 
 
@@ -204,12 +204,12 @@ void sigchld_handler(int sig, siginfo_t *siginfo, void *context) {
 
     pid_t pid = siginfo->si_pid;
 
-    struct JobNode *current = jobList;
+    struct job_node *current = jobList;
     while (current->next) {
         current = current->next;
 
         if(current->job->pid == pid) {
-            removeJob(jobList, current);
+            remove_job(jobList, current);
             printf("Terminated child : %d\n", siginfo->si_pid);
             return;
         }
@@ -226,7 +226,7 @@ int main()
     scm_c_define_gsubr("executer", 1, 0, 0, executer_wrapper);
 #endif
 
-    jobList = newJobNode(NULL);
+    jobList = new_job_node(NULL);
 
     struct sigaction act;
     memset (&act, '\0', sizeof(act));

@@ -3,17 +3,17 @@
 
 #include <stdlib.h>
 
-struct Command {
+struct command {
     int fd[2];
-    struct Command* prev;
-    struct Command* next;
+    struct command* prev;
+    struct command* next;
     pid_t pid;
     char **cmd;
 };
 
-extern struct Command* newCommand();
-extern struct Command* getNextCommand(struct Command *command);
-extern void freeCommands(struct Command *command);
-extern struct Command* getFirstCommand(struct Command* command);
+extern struct command* new_command();
+extern struct command* get_next_command(struct command *command);
+extern void free_commands(struct command *command);
+extern struct command* get_first_command(struct command *command);
 
 #endif //ENSISHELL_PIPE_H

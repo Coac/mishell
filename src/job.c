@@ -2,21 +2,20 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <sys/wait.h>
 
-struct Job* newJob(int pid, char **cmd, int cmdCount) {
-    struct Job* job = malloc(sizeof(struct Job));
+struct job* new_job(int pid, char **cmd, int cmd_count) {
+    struct job* job = malloc(sizeof(struct job));
     job->pid = pid;
     job->cmd = cmd;
-    job->cmdCount = cmdCount;
+    job->cmd_count = cmd_count;
 
     return job;
 }
 
-void freeJob(struct Job* job) {
+void free_job(struct job *job) {
     char **jobCmd = job->cmd;
-    for (int l = 0; l < job->cmdCount; l++) {
+    for (int l = 0; l < job->cmd_count; l++) {
         free(jobCmd[l]);
     }
     free(job->cmd);
@@ -25,44 +24,45 @@ void freeJob(struct Job* job) {
     job = NULL;
 }
 
-struct JobNode* newJobNode(struct Job* job) {
-    struct JobNode* jobList = (struct JobNode*) malloc(sizeof(struct JobNode));
+struct job_node* new_job_node(struct job *job) {
+    struct job_node* jobList = (struct job_node*) malloc(sizeof(struct job_node));
     jobList->next = NULL;
     jobList->job = job;
 
     return jobList;
 }
 
-void freeJobNode(struct JobNode *node) {
-    freeJob(node->job);
+void free_job_node(struct job_node *node) {
+    free_job(node->job);
     free(node);
     node = NULL;
 }
 
-void addJob(struct JobNode *head, struct Job *job) {
-    struct JobNode *current = head;
-    struct JobNode *newNode = newJobNode(job);
+void add_job(struct job_node *head, struct job *job) {
+    struct job_node *current = head;
+    struct job_node *newNode = new_job_node(job);
 
     while (current->next) {
         current = current->next;
     }
+
     current->next = newNode;
 }
 
-void removeJob(struct JobNode *head, struct JobNode *jobNode) {
-    struct JobNode *current = head;
-    struct JobNode *prev = NULL;
+void remove_job(struct job_node *head, struct job_node *job_node) {
+    struct job_node *current = head;
+    struct job_node *prev = NULL;
     while (current->next) {
         prev = current;
         current = current->next;
 
-        if(current == jobNode) {
+        if(current == job_node) {
             if(current->next) {
                 prev->next = current->next;
             } else {
                 prev->next = NULL;
             }
-            freeJobNode(current);
+            free_job_node(current);
 
             return;
         }
@@ -70,18 +70,18 @@ void removeJob(struct JobNode *head, struct JobNode *jobNode) {
     }
 }
 
-void printJobs(struct JobNode *head)
+void remove_jobs(struct job_node *head)
 {
     printf("Job list : \n");
 
-    struct JobNode *current = head;
+    struct job_node *current = head;
     while (current->next) {
         current = current->next;
-        struct Job* job = current->job;
+        struct job* job = current->job;
         printf("%d ", job->pid);
 
         char **jobCmd = job->cmd;
-        for (int l = 0; l < job->cmdCount; l++) {
+        for (int l = 0; l < job->cmd_count; l++) {
             printf("%s ", jobCmd[l]);
         }
 
@@ -104,7 +104,7 @@ void printJobs(struct JobNode *head)
             }
         } else {
             printf("exited");
-            removeJob(head, current);
+            remove_job(head, current);
         }
         printf("\n");
     }

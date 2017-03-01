@@ -1,24 +1,24 @@
 #ifndef ENSISHELL_JOB_H
 #define ENSISHELL_JOB_H
 
-struct Job {
+struct job {
     int pid;
     char **cmd;
-    int cmdCount;
+    int cmd_count;
 };
 
 // Job Linked list
-struct JobNode {
-    struct Job* job;
-    struct JobNode* next;
+struct job_node {
+    struct job* job;
+    struct job_node* next;
 };
 
-struct Job* newJob(int _pid, char **_cmd, int _cmdCount);
-void freeJob(struct Job* job);
-struct JobNode* newJobNode(struct Job* job);
-void freeJobNode(struct JobNode *node);
-void addJob(struct JobNode *head, struct Job *job);
-void removeJob(struct JobNode *head, struct JobNode *jobNode);
-void printJobs(struct JobNode *head);
+struct job* new_job(int pid, char **cmd, int cmd_count);
+void free_job(struct job *job);
+struct job_node* new_job_node(struct job *job);
+void free_job_node(struct job_node *node);
+void add_job(struct job_node *head, struct job *job);
+void remove_job(struct job_node *head, struct job_node *job_node);
+void remove_jobs(struct job_node *head);
 
 #endif //ENSISHELL_JOB_H
