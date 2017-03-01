@@ -1,35 +1,49 @@
-ensimag-shell
-=============
+# mishell ⚡
 
-Squelette pour le TP shell
+Mishell is a Unix shell
 
-Tous les fichiers sont sous licence GPLv3+
+## Installation
 
-Introduction
-----------
-
-Ces fichiers servent de base à un TP sur le shell de commande à la Unix.
-
-Spécificités de ce squelette:
-- plusieurs variantes (libre choix par les étudiants)
-- jeux de tests fournis aux étudiants
-- utilisation de Gnu Readline
-- Scheme (interpréteur Guile; Javascript possible)
-
-Compilation et lancement des tests
-----------
-
-cd ensimag-shell
+```
 cd build
 cmake ..
 make
-make test
+```
+
+## Usage
+```
+./mishell
+```
+
+## Commands
+
+### `jobs` : print the background jobs
+
+Example :
+
+```
+mishell ⚡ sleep 10 &
+sleep 10 mishell ⚡
+mishell ⚡ jobs
+Job list :
+10904 sleep 10 alive
+mishell ⚡
+mishell ⚡ Terminated child : 10904
+
+```
 
 
+### `(scheme expr)` : execute the "`scheme expr`" via an interpreter [Scheme](https://en.wikipedia.org/wiki/Scheme_%28programming_language%29)
 
-Autres
-------
+Example :
 
-Les premières versions imposaient la variante par un modulo sur le
-sha512 sur de la liste triée des logins des étudiants. Cela peut être
-réalisé complètement en CMake (>= 2.8).
+```
+mishell ⚡ (display "Hello world!\n")
+Hello world!
+mishell ⚡
+```
+
+## Variantes implemented
+
+- Asynchronous termination
+- Multiple Pipes
