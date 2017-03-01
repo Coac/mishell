@@ -13,7 +13,7 @@
 #include "variante.h"
 #include "readcmd.h"
 #include "job.h"
-#include "pipe.h"
+#include "command.h"
 
 #ifndef VARIANTE
 #error "Variante non défini !!"
@@ -75,7 +75,7 @@ void compute_file_redirection(char* in, char* out) {
     }
 }
 
-void compute_pipes(struct Pipe* pipes, bool isLast) {
+void compute_pipes(struct Command* pipes, bool isLast) {
     if (!isLast) { // if not last
         dup2(pipes->fd[1], STDOUT_FILENO); // we listen for the next
     }
@@ -125,57 +125,58 @@ void compute_cmd(struct cmdline *l) {
     if (l->bg) printf("background (&)\n");
 #endif
 
-    struct Pipe* pipes = newPipe();
-    pid_t pids[100];
+    struct Command* command = newCommand();
     /* Display each command of the pipe */
     for (i = 0; l->seq[i] != 0; i++) {
-        char **cmd = l->seq[i];
-        j = print_cmd(i, cmd);
+        command->cmd = l->seq[i];
+        j = print_cmd(i, command->cmd);
 
-        if(strcmp(cmd[0], "jobs") == 0) {
+        if(strcmp(command->cmd[0], "jobs") == 0) {
             printJobs(jobList);
             continue;
         }
 
-        pipe(pipes->fd);
+        pipe(command->fd);
         pid_t child_pid = fork();
-        pids[i] = child_pid;
+        command->pid = child_pid;
         if (child_pid < 0) {
             perror("fork:");
         }
 
         if (child_pid == 0) {
             compute_file_redirection(l->in, l->out);
-            compute_pipes(pipes, l->seq[i+1] == 0);
-            execvp(cmd[0], cmd);
+            compute_pipes(command, l->seq[i+1] == 0);
+            execvp(command->cmd[0], command->cmd);
 
             return;
         }
 
-        if (pipes->prev != NULL) { // if not first, the i-1 pipe can be closed as it is not used anymore
-            close(pipes->prev->fd[0]);
-            close(pipes->prev->fd[1]);
+        if (command->prev != NULL) { // if not first, the i-1 pipe can be closed as it is not used anymore
+            close(command->prev->fd[0]);
+            close(command->prev->fd[1]);
         }
 
-        pipes = getNextPipe(pipes);
+        command = getNextCommand(command);
     }
 
-    for (int k = 0; l->seq[k] != 0; k++) {
-		char **cmd = l->seq[k];
-    	pid_t child_pid = pids[k];
+    command = getFirstCommand(command);
+
+    while (command != NULL) {
 		if(l->bg) {
 			printf("%d", j);
-			if(child_pid > 0) {
-			   struct Job* job = newJob(child_pid, string_array_copy(cmd), j);
+			if(command->pid > 0) {
+			   struct Job* job = newJob(command->pid, string_array_copy(command->cmd), j);
 			   addJob(jobList, job);
 			}
 		} else {
 			int status;
-			waitpid(child_pid, &status, 0);
+			waitpid(command->pid, &status, 0);
 		}
+
+        command = command->next;
     }
 
-    freePipes(pipes);
+    freeCommands(command);
 }
 
 
