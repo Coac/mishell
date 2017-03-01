@@ -1,6 +1,6 @@
-# mishell ⚡
+# Mishell ⚡
 
-Mishell is a Unix shell
+Mishell is an Unix shell.
 
 ## Installation
 
@@ -11,15 +11,20 @@ make
 ```
 
 ## Usage
+
+Launch the shell using the following command in the `build` folder: 
+
 ```
 ./mishell
 ```
 
-## Commands
+## Built-in commands
 
-### `jobs` : print the background jobs
+In addition to your system binaries, you can also run the following built-in commands:
 
-Example :
+### `jobs` prints the background jobs
+
+Example:
 
 ```
 mishell ⚡ sleep 10 &
@@ -29,13 +34,11 @@ Job list :
 10904 sleep 10 alive
 mishell ⚡
 mishell ⚡ Terminated child : 10904
-
 ```
 
+### `(scheme expr)` executes the `scheme expr` using a [Scheme](https://en.wikipedia.org/wiki/Scheme_%28programming_language%29) interpreter
 
-### `(scheme expr)` : execute the "`scheme expr`" via an interpreter [Scheme](https://en.wikipedia.org/wiki/Scheme_%28programming_language%29)
-
-Example :
+Example:
 
 ```
 mishell ⚡ (display "Hello world!\n")
@@ -43,7 +46,7 @@ Hello world!
 mishell ⚡
 ```
 
-## Variantes implemented
+## Implemented variants
 
 - Asynchronous termination
-- Multiple Pipes
+- Chained pipes
