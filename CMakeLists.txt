@@ -3,7 +3,7 @@ if(COMMAND cmake_policy)
   cmake_policy(SET CMP0003 NEW)
 endif(COMMAND cmake_policy)
 
-project(Ensishell)
+project(mishell)
 enable_testing()
 
 #######
@@ -20,7 +20,7 @@ endif ()
 
 #######
 # Detect Guile en utilisant pkg-config
-# Si guile est desactivé dans ensishell.c vous pouvez commenter les lignes
+# Si guile est desactivé dans mishell.c vous pouvez commenter les lignes
 #####
 # Guile 2.0 by default
 
@@ -93,11 +93,11 @@ configure_file (
 #########
 
 ##
-# Si vous utilisez plusieurs fichiers, en plus de ensishell.c, pour votre
+# Si vous utilisez plusieurs fichiers, en plus de mishell.c, pour votre
 # shell il faut les ajouter ici
 ##
-add_executable(ensishell src/readcmd.c src/ensishell.c src/job.c src/command.c)
-target_link_libraries(ensishell ${READLINE_LDFLAGS} ${GUILE_LDFLAGS})
+add_executable(mishell src/readcmd.c src/mishell.c src/job.c src/command.c)
+target_link_libraries(mishell ${READLINE_LDFLAGS} ${GUILE_LDFLAGS})
 
 ##
 # Programme de test
