@@ -148,8 +148,7 @@ void compute_cmd(struct cmdline *l) {
             compute_file_redirection(l->in, l->out);
             compute_pipes(pipes, l->seq[i+1] == 0);
             execvp(cmd[0], cmd);
-
-            return;
+            exit(EXIT_FAILURE);
         }
 
         if (pipes->prev != NULL) { // if not first, the i-1 pipe can be closed as it is not used anymore
