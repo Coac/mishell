@@ -195,9 +195,9 @@ void compute_cmd(struct cmdline *l) {
     command = get_first_command(command);
 
     while (command != NULL) {
-		if(l->bg) {
-			if(command->pid > 0) {
-			   struct job *job = new_job(command->pid, string_array_copy(command->cmd), j);
+        if (l->bg) {
+            if (command->pid > 0) {
+                struct job *job = new_job(command->pid, string_array_copy(command->cmd), j);
                 add_job(jobList, job);
             }
         } else {
