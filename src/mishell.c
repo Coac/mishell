@@ -168,7 +168,7 @@ void compute_cmd(struct cmdline *l) {
 
         if (strcmp(cmd[0], "jobs") == 0) {
             remove_jobs(jobList);
-            continue;
+            return;
         }
 
         pipe(command->fd);
@@ -197,7 +197,6 @@ void compute_cmd(struct cmdline *l) {
     command = get_first_command(command);
 
     while (command->next != NULL) {
-        printf("%d pid:%d indCmd:%d\n", l->bg, command->pid, command->ind_cmd);
         if (command->pid > 0) {
             if (l->bg) {
                 struct job *job = new_job(command->pid, string_array_copy(l->seq[command->ind_cmd]), j);
