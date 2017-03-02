@@ -21,6 +21,7 @@ void free_commands(struct command *command) {
 
     while (current != NULL) {
         current = command->prev;
+
         free(command);
         command = current;
     }

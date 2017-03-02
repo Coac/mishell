@@ -159,12 +159,14 @@ void compute_cmd(struct cmdline *l) {
 #endif
 
     struct command *command = new_command();
+    command->pid = 0;
     /* Display each command of the pipe */
     for (i = 0; l->seq[i] != 0; i++) {
-        command->cmd = l->seq[i];
-        j = print_cmd(i, command->cmd);
+        command->ind_cmd = i;
+        char **cmd = l->seq[i];
+        j = print_cmd(i, cmd);
 
-        if (strcmp(command->cmd[0], "jobs") == 0) {
+        if (strcmp(cmd[0], "jobs") == 0) {
             remove_jobs(jobList);
             continue;
         }
@@ -179,7 +181,7 @@ void compute_cmd(struct cmdline *l) {
         if (child_pid == 0) {
             compute_file_redirection(l->in, l->out);
             compute_pipes(command, l->seq[i + 1] == 0);
-            execvp(command->cmd[0], command->cmd);
+            execvp(cmd[0], cmd);
 
             exit(EXIT_FAILURE);
         }
@@ -194,16 +196,18 @@ void compute_cmd(struct cmdline *l) {
 
     command = get_first_command(command);
 
-    while (command != NULL) {
-        if (l->bg) {
-            if (command->pid > 0) {
-                struct job *job = new_job(command->pid, string_array_copy(command->cmd), j);
+    while (command->next != NULL) {
+        printf("%d pid:%d indCmd:%d\n", l->bg, command->pid, command->ind_cmd);
+        if (command->pid > 0) {
+            if (l->bg) {
+                struct job *job = new_job(command->pid, string_array_copy(l->seq[command->ind_cmd]), j);
                 add_job(jobList, job);
+
+                printf("\n");
+            } else {
+                int status;
+                waitpid(command->pid, &status, 0);
             }
-            printf("\n");
-        } else {
-            int status;
-            waitpid(command->pid, &status, 0);
         }
 
         command = command->next;

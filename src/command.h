@@ -14,7 +14,7 @@ struct command {
     struct command *prev;
     struct command *next;
     pid_t pid;
-    char **cmd;
+    int ind_cmd;
 };
 
 /**
